@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
   getEventById,
@@ -144,7 +144,6 @@ function parseTags(tagsStr) {
 
 function EventDetailsPage() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const { toast } = useNotification();
   const [isFavorited, setIsFavorited] = useState(false);
   const [isRsvped, setIsRsvped] = useState(false);
@@ -181,8 +180,7 @@ function EventDetailsPage() {
         try {
           const favoriteCheck = await checkFavorite(id);
           setIsFavorited(favoriteCheck.isFavorited);
-        } catch (err) {
-          
+        } catch {
           setIsFavorited(false);
         }
 
@@ -190,7 +188,7 @@ function EventDetailsPage() {
         try {
           const rsvpCheck = await checkRSVPStatus(id);
           setIsRsvped(rsvpCheck.isRsvped);
-        } catch (err) {
+        } catch {
           setIsRsvped(false);
         }
 
@@ -207,7 +205,7 @@ function EventDetailsPage() {
         try {
           const list = await getEventAnnouncements(id);
           setAnnouncements(Array.isArray(list) ? list : []);
-        } catch (e) {
+        } catch {
           setAnnouncements([]);
         }
 
@@ -376,7 +374,6 @@ function EventDetailsPage() {
     );
   }
 
-  const addressText = buildFullAddress(event); 
   const displayAddress = getDisplayAddress(event); 
   const dateText = formatEventDate(event?.starts_at);
   const timeText = formatEventTimeRange(event?.starts_at, event?.ends_at);

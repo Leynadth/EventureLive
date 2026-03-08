@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "../../api";
+import { useAuth } from "../../contexts/AuthContext";
 
 function EyeIcon({ show, onClick }) {
   return (
@@ -27,6 +28,8 @@ function EyeIcon({ show, onClick }) {
 }
 
 function RegisterPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -39,7 +42,12 @@ function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate(user.role === "admin" ? "/admin" : "/dashboard", { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -219,14 +227,7 @@ function RegisterPage() {
                 className="mt-1 w-4 h-4 rounded border-[#cbd5e1] text-[#2e6b4e] focus:ring-[#2e6b4e]"
               />
               <span className="text-sm text-[#475569]">
-                I agree to the{" "}
-                <Link to="#" className="text-[#2e6b4e] hover:underline font-medium">
-                  Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link to="#" className="text-[#2e6b4e] hover:underline font-medium">
-                  Privacy Policy
-                </Link>
+                I agree to the Terms of Service and Privacy Policy.
               </span>
             </label>
 

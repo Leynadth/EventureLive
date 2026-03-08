@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from "react";
 import { getProfile } from "../api";
 
@@ -36,11 +37,15 @@ export function AuthProvider({ children }) {
     if (nextUser === null) {
       try {
         localStorage.removeItem("eventure_token");
-      } catch {}
+      } catch {
+        /* ignore */
+      }
     } else if (token) {
       try {
         localStorage.setItem("eventure_token", token);
-      } catch {}
+      } catch {
+        /* ignore */
+      }
     }
     setUserState(nextUser);
   };

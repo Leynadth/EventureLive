@@ -1,21 +1,19 @@
 import { useNavigate } from "react-router-dom";
 
-function EventCard({ 
-  title, 
-  date, 
-  location, 
-  category, 
-  price, 
-  imageUrl, 
+function EventCard({
+  title,
+  date,
+  location,
+  category,
+  price,
+  imageUrl,
   viewMode = "grid",
   eventId,
   isFavorited = false,
   isRsvped = false,
   onFavoriteClick,
-  attendance,
-  isFeatured = false,
   capacity = null,
-  rsvpCount = 0
+  rsvpCount = 0,
 }) {
   const isFree = price === 0 || price === null || price === undefined;
   

@@ -26,7 +26,7 @@ function CreateEventPage() {
   const [uploadingImages, setUploadingImages] = useState(false);
   const [error, setError] = useState("");
   const [isAddressValid, setIsAddressValid] = useState(false);
-  const [images, setImages] = useState({
+  const [, setImages] = useState({
     image1: null,
     image2: null,
     image3: null,
@@ -388,8 +388,7 @@ function CreateEventPage() {
       };
 
       if (isEditMode) {
-        
-        const response = await updateEvent(id, eventData);
+        await updateEvent(id, eventData);
         navigate(`/events/${id}`, {
           state: { message: "Event updated successfully!" },
         });
@@ -622,7 +621,7 @@ function CreateEventPage() {
                   value={formData.title}
                   onChange={handleChange}
                   required
-                  placeholder="e.g., Campus Open Mic Night"
+                  placeholder="e.g., Summer Meetup or Workshop Title"
                   className={inputBase}
                 />
               </div>
@@ -804,7 +803,7 @@ function CreateEventPage() {
                   value={formData.venue}
                   onChange={handleChange}
                   required
-                  placeholder="e.g., NEIT Student Center"
+                  placeholder="e.g., Community Center or Auditorium"
                   className={inputBase}
                 />
               </div>
@@ -822,7 +821,7 @@ function CreateEventPage() {
                   onPlaceSelect={handleAddressSelect}
                   onValidationChange={setIsAddressValid}
                   required
-                  placeholder="e.g., 186 Harmon Ave, East Greenwich, RI"
+                  placeholder="e.g., 123 Main St, Anytown, ST 12345"
                   className={inputBase}
                 />
               </div>

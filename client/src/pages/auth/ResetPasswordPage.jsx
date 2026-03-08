@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { verifyResetCode, resetPassword } from "../../api";
+import { useAuth } from "../../contexts/AuthContext";
 
 function EyeIcon({ show, onClick }) {
   return (
@@ -27,7 +28,9 @@ function EyeIcon({ show, onClick }) {
 }
 
 function ResetPasswordPage() {
+  const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [step, setStep] = useState("verify"); 
   const [formData, setFormData] = useState({
     email: location.state?.email || "",
@@ -40,10 +43,14 @@ function ResetPasswordPage() {
   const [error, setError] = useState("");
   const [verifySuccess, setVerifySuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
-    
+    if (user) {
+      navigate(user.role === "admin" ? "/admin" : "/dashboard", { replace: true });
+    }
+  }, [user, navigate]);
+
+  useEffect(() => {
     if (location.state?.email) {
       setFormData((prev) => ({ ...prev, email: location.state.email }));
     }

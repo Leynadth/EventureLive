@@ -298,7 +298,9 @@ function NavBar() {
                           messages: [],
                           unreadCount: prev.organizerSignup && prev.organizerSignup.status !== "approved" ? 1 : 0,
                         }));
-                      } catch {}
+                      } catch {
+                        /* ignore */
+                      }
                     }}
                     className="text-xs font-medium text-[#64748b] hover:text-[#2e6b4e]"
                   >
@@ -331,7 +333,9 @@ function NavBar() {
                             try {
                               await dismissSignupNotification(notifications.organizerSignup.id);
                               setNotifications((prev) => ({ ...prev, organizerSignup: null, unreadCount: Math.max(0, (prev.unreadCount || 0) - 1) }));
-                            } catch {}
+                            } catch {
+                              /* ignore */
+                            }
                           }}
                           className="shrink-0 p-1 text-[#94a3b8] hover:text-[#0f172b] rounded"
                           aria-label="Dismiss"

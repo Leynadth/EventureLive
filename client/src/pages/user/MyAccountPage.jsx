@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AppShell from "../../components/layout/AppShell";
-import { useAuth, useCurrentUser, useUserRole } from "../../contexts/AuthContext";
+import { useAuth, useCurrentUser } from "../../contexts/AuthContext";
 import { useNotification } from "../../contexts/NotificationContext";
 import {
   getProfile,
@@ -18,7 +18,6 @@ function MyAccountPage() {
   const navigate = useNavigate();
   const { setUser } = useAuth();
   const user = useCurrentUser();
-  const role = useUserRole();
   const { toast } = useNotification();
   const [activeTab, setActiveTab] = useState("profile");
   const [profile, setProfile] = useState(null);
@@ -190,8 +189,7 @@ function MyAccountPage() {
 
     try {
       setUploadingPicture(true);
-      const result = await uploadProfilePicture(file);
-      
+      await uploadProfilePicture(file);
       const updatedProfile = await getProfile();
       setProfile(updatedProfile);
       toast("Profile picture updated successfully!", "success");

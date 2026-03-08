@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { getEvents, getCategories, getLocationFromCoords, checkFavorite, addFavorite, removeFavorite, checkRSVPStatus } from "../../api";
 import EventCard from "../../components/events/EventCard";
 import { useNotification } from "../../contexts/NotificationContext";
@@ -91,7 +91,6 @@ function getImageUrl(imagePath) {
 
 function BrowseEventsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
   const { toast } = useNotification();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
@@ -126,9 +125,6 @@ function BrowseEventsPage() {
   useEffect(() => {
     getCategories().then((list) => setCategories(["All", ...(list || [])])).catch(() => {});
   }, []);
-
-  
-  const isAuthenticated = () => !!user;
 
   const handleZipChange = (e) => {
     const value = e.target.value;

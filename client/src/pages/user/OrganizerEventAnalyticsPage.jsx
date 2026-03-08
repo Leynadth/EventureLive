@@ -8,18 +8,6 @@ function formatDate(d) {
   return new Date(d).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
 }
 
-function formatDateTime(d) {
-  if (!d) return "—";
-  return new Date(d).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
-
 function formatDateTimeEastern(d) {
   if (!d) return "—";
   return new Date(d).toLocaleString("en-US", {

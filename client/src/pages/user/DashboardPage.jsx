@@ -123,7 +123,7 @@ function DashboardPage() {
                   categories.map((category) => (
                     <Link
                       key={category}
-                      to={`/events/browse?category=${encodeURIComponent(category)}`}
+                      to={`/browse?category=${encodeURIComponent(category)}`}
                       className="px-4 py-2 bg-white border border-[#cad5e2] rounded-lg text-[#314158] hover:border-[#2e6b4e] hover:text-[#2e6b4e] transition-colors"
                     >
                       {category}
@@ -131,7 +131,7 @@ function DashboardPage() {
                   ))
                 ) : (
                   <Link
-                    to="/events/browse"
+                    to="/browse"
                     className="px-4 py-2 bg-white border border-[#cad5e2] rounded-lg text-[#314158] hover:border-[#2e6b4e] hover:text-[#2e6b4e] transition-colors"
                   >
                     Browse events

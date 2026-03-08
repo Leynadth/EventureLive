@@ -380,24 +380,27 @@ function HomePage() {
         <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.06)_0%,transparent_50%)]" />
         <div className="relative max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/15 mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-            Stay in the loop
+            Ready to attend an event?
           </h2>
           <p className="text-white/90 mb-6">
-            Get new events in your inbox. No spam—just what&apos;s happening near you.
+            Discover concerts, meetups, workshops, and more happening near you.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="flex-1 h-12 px-4 rounded-xl border border-white/20 bg-white/10 text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/30 transition-colors"
-            />
-            <button className="h-12 px-6 bg-white text-[#2e6b4e] rounded-xl font-semibold hover:bg-white/95 transition-colors whitespace-nowrap">
-              Subscribe
-            </button>
-          </div>
+          <Link
+            to="/browse"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-white text-[#2e6b4e] rounded-xl font-semibold hover:bg-white/95 transition-colors"
+          >
+            Browse events
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          </Link>
         </div>
       </section>
 

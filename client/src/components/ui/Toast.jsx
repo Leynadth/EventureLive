@@ -1,4 +1,4 @@
-function Toast({ id, message, type = "info", onDismiss }) {
+function Toast({ message, type = "info", onDismiss }) {
   const styles = {
     success: "bg-[#2e6b4e] text-white border-[#255a43] shadow-lg",
     error: "bg-red-600 text-white border-red-700 shadow-lg",
