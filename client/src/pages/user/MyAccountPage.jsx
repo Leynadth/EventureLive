@@ -5,8 +5,6 @@ import { useAuth, useCurrentUser, useUserRole } from "../../contexts/AuthContext
 import { useNotification } from "../../contexts/NotificationContext";
 import {
   getProfile,
-  requestChangePasswordCode,
-  changePassword,
   requestDeleteAccountCode,
   deleteAccount,
   logout,
@@ -25,18 +23,6 @@ function MyAccountPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  
-  const [showChangePassword, setShowChangePassword] = useState(false);
-  const [changePasswordStep, setChangePasswordStep] = useState("request"); 
-  const [changePasswordData, setChangePasswordData] = useState({
-    code: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
-  const [changePasswordLoading, setChangePasswordLoading] = useState(false);
-  const [changePasswordError, setChangePasswordError] = useState("");
-
-  
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deleteAccountStep, setDeleteAccountStep] = useState("confirm"); 
   const [deleteAccountCode, setDeleteAccountCode] = useState("");
@@ -64,52 +50,6 @@ function MyAccountPage() {
 
     loadProfile();
   }, []);
-
-  const handleChangePasswordRequest = async () => {
-    try {
-      setChangePasswordLoading(true);
-      setChangePasswordError("");
-      await requestChangePasswordCode();
-      setChangePasswordStep("verify");
-    } catch (err) {
-      setChangePasswordError(err.message || "Failed to send verification code");
-    } finally {
-      setChangePasswordLoading(false);
-    }
-  };
-
-  const handleChangePasswordVerify = async (e) => {
-    e.preventDefault();
-    setChangePasswordError("");
-
-    if (!/^\d{6}$/.test(changePasswordData.code)) {
-      setChangePasswordError("Code must be exactly 6 digits");
-      return;
-    }
-
-    if (changePasswordData.newPassword.length < 8) {
-      setChangePasswordError("Password must be at least 8 characters");
-      return;
-    }
-
-    if (changePasswordData.newPassword !== changePasswordData.confirmPassword) {
-      setChangePasswordError("Passwords do not match");
-      return;
-    }
-
-    try {
-      setChangePasswordLoading(true);
-      await changePassword(changePasswordData.code, changePasswordData.newPassword);
-      setShowChangePassword(false);
-      setChangePasswordStep("request");
-      setChangePasswordData({ code: "", newPassword: "", confirmPassword: "" });
-      toast("Password changed successfully!", "success");
-    } catch (err) {
-      setChangePasswordError(err.message || "Failed to change password");
-    } finally {
-      setChangePasswordLoading(false);
-    }
-  };
 
   const handleDeleteAccountRequest = async () => {
     try {
@@ -434,44 +374,6 @@ function MyAccountPage() {
 
           {activeTab === "settings" && (
             <div className="space-y-6">
-              
-              <div className="bg-white border border-[#e2e8f0] rounded-2xl shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-[#e2e8f0] bg-[#fafbfc]">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#2e6b4e]/10 text-[#2e6b4e] shrink-0">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-semibold text-[#0f172b]">Security</h3>
-                  </div>
-                </div>
-                <div className="p-6 space-y-2">
-                  <button
-                    onClick={() => setShowChangePassword(true)}
-                    className="w-full text-left px-4 py-3 rounded-xl border border-[#e2e8f0] bg-white hover:bg-[#f8fafc] hover:border-[#2e6b4e]/30 transition-colors flex items-center justify-between group"
-                  >
-                    <span className="text-[#314158] font-medium">Change Password</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#64748b] group-hover:text-[#2e6b4e] transition-colors">
-                      <path d="M9 18l6-6-6-6" />
-                    </svg>
-                  </button>
-                  <button className="w-full text-left px-4 py-3 rounded-xl border border-[#e2e8f0] bg-white hover:bg-[#f8fafc] hover:border-[#2e6b4e]/30 transition-colors flex items-center justify-between group">
-                    <span className="text-[#314158] font-medium">Two-Factor Authentication</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#64748b] group-hover:text-[#2e6b4e] transition-colors">
-                      <path d="M9 18l6-6-6-6" />
-                    </svg>
-                  </button>
-                  <button className="w-full text-left px-4 py-3 rounded-xl border border-[#e2e8f0] bg-white hover:bg-[#f8fafc] hover:border-[#2e6b4e]/30 transition-colors flex items-center justify-between group">
-                    <span className="text-[#314158] font-medium">Connected Accounts</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#64748b] group-hover:text-[#2e6b4e] transition-colors">
-                      <path d="M9 18l6-6-6-6" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              
               <div className="bg-white border border-red-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-red-200 bg-red-50/50">
                   <div className="flex items-center gap-3">
@@ -496,118 +398,6 @@ function MyAccountPage() {
           )}
         </div>
       </div>
-
-      
-      {showChangePassword && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-5">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-[#0f172b] mb-4">Change Password</h3>
-
-            {changePasswordStep === "request" && (
-              <div>
-                <p className="text-[#45556c] mb-4">
-                  We'll send a verification code to your email to confirm the password change.
-                </p>
-                {changePasswordError && (
-                  <div className="bg-red-50 text-red-600 p-3 rounded-xl mb-4 text-sm">{changePasswordError}</div>
-                )}
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowChangePassword(false);
-                      setChangePasswordStep("request");
-                      setChangePasswordError("");
-                    }}
-                    className="flex-1 px-4 py-2.5 bg-white border border-[#e2e8f0] text-[#314158] rounded-xl font-medium hover:bg-[#f8fafc] transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleChangePasswordRequest}
-                    disabled={changePasswordLoading}
-                    className="flex-1 px-4 py-2.5 bg-[#2e6b4e] text-white rounded-xl font-medium hover:bg-[#255a43] transition-colors disabled:opacity-50"
-                  >
-                    {changePasswordLoading ? "Sending..." : "Send Code"}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {changePasswordStep === "verify" && (
-              <form onSubmit={handleChangePasswordVerify} className="space-y-4">
-                <p className="text-[#64748b] text-sm mb-4">Enter the verification code sent to your email and your new password.</p>
-                {changePasswordError && (
-                  <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm">{changePasswordError}</div>
-                )}
-                <div>
-                  <label className="text-sm font-medium text-[#314158] mb-1 block">Verification Code</label>
-                  <input
-                    type="text"
-                    value={changePasswordData.code}
-                    onChange={(e) => {
-                      const digitsOnly = e.target.value.replace(/\D/g, "");
-                      if (digitsOnly.length <= 6) {
-                        setChangePasswordData({ ...changePasswordData, code: digitsOnly });
-                      }
-                    }}
-                    maxLength={6}
-                    placeholder="Enter 6-digit code"
-                    className="w-full h-12 px-4 rounded-xl border border-[#e2e8f0] text-center tracking-widest text-lg font-mono focus:outline-none focus:ring-2 focus:ring-[#2e6b4e] focus:border-transparent"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-[#314158] mb-1 block">New Password</label>
-                  <input
-                    type="password"
-                    value={changePasswordData.newPassword}
-                    onChange={(e) => setChangePasswordData({ ...changePasswordData, newPassword: e.target.value })}
-                    placeholder="At least 8 characters"
-                    minLength={8}
-                    className="w-full h-12 px-4 rounded-xl border border-[#e2e8f0] focus:outline-none focus:ring-2 focus:ring-[#2e6b4e] focus:border-transparent"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-[#314158] mb-1 block">Confirm Password</label>
-                  <input
-                    type="password"
-                    value={changePasswordData.confirmPassword}
-                    onChange={(e) => setChangePasswordData({ ...changePasswordData, confirmPassword: e.target.value })}
-                    placeholder="Confirm your password"
-                    minLength={8}
-                    className="w-full h-12 px-4 rounded-xl border border-[#e2e8f0] focus:outline-none focus:ring-2 focus:ring-[#2e6b4e] focus:border-transparent"
-                    required
-                  />
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowChangePassword(false);
-                      setChangePasswordStep("request");
-                      setChangePasswordData({ code: "", newPassword: "", confirmPassword: "" });
-                      setChangePasswordError("");
-                    }}
-                    className="flex-1 px-4 py-2.5 bg-white border border-[#e2e8f0] text-[#314158] rounded-xl font-medium hover:bg-[#f8fafc] transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={changePasswordLoading}
-                    className="flex-1 px-4 py-2.5 bg-[#2e6b4e] text-white rounded-xl font-medium hover:bg-[#255a43] transition-colors disabled:opacity-50"
-                  >
-                    {changePasswordLoading ? "Changing..." : "Change Password"}
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
 
       {showDeleteAccount && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-5">
