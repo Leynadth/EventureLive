@@ -38,7 +38,13 @@ app.set("trust proxy", 1);
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 
 const frontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, "") : null;
-const allowedOrigins = frontendUrl ? [frontendUrl] : ["http://localhost:5173", "http://localhost:5174"];
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://eventurelive.pages.dev",
+  "https://b7352851.eventurelive.pages.dev",
+];
+if (frontendUrl && !allowedOrigins.includes(frontendUrl)) allowedOrigins.push(frontendUrl);
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
