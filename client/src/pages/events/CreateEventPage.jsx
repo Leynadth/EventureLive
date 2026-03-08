@@ -22,6 +22,7 @@ function CreateEventPage() {
   }, [isEditMode, role, navigate]);
   const [loading, setLoading] = useState(false);
   const [loadingEvent, setLoadingEvent] = useState(isEditMode);
+  const [editForbidden, setEditForbidden] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [error, setError] = useState("");
   const [isAddressValid, setIsAddressValid] = useState(false);
@@ -81,7 +82,15 @@ function CreateEventPage() {
         setError("");
         const event = await getEventById(id);
         if (!user) {
-          navigate("/my-events");
+          navigate("/my-events", { replace: true });
+          return;
+        }
+        const isOwner = String(event.created_by) === String(user.id);
+        const isAdmin = user.role === "admin";
+        if (!isOwner && !isAdmin) {
+          setEditForbidden(true);
+          navigate("/my-events", { replace: true });
+          setLoadingEvent(false);
           return;
         }
         const startDate = new Date(event.starts_at);
@@ -167,7 +176,8 @@ function CreateEventPage() {
   }
 
   
-  if (loadingEvent) {
+  if (loadingEvent || (isEditMode && editForbidden)) {
+    if (isEditMode && editForbidden) return null;
     return (
       <AppShell>
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-5">
