@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const { pool } = require("../db");
 const { authenticateToken, authorize } = require("../middleware/auth");
 const { sendMail } = require("../utils/mailer");
+const { containsProfanity } = require("../utils/contentFilter");
 
 const router = express.Router();
 
@@ -165,11 +166,15 @@ router.post("/", authenticateToken, authorize(["organizer", "admin"]), async (re
       }
     }
 
+    const safeVenue = venue ? String(venue).trim() : null;
+    if (containsProfanity(title) || containsProfanity(description || "") || containsProfanity(safeVenue || "")) {
+      return res.status(400).json({ error: "Inappropriate content is not allowed" });
+    }
+
     
     const safeState = state ? String(state).trim().substring(0, 49) : null;
     const safeCity = city ? String(city).trim().substring(0, 100) : null;
     const safeZip = zip_code ? String(zip_code).trim().substring(0, 10) : null;
-    const safeVenue = venue ? String(venue).trim() : null;
     const safeAddressLine1 = address_line1 ? String(address_line1).trim() : null;
 
     
@@ -732,10 +737,14 @@ router.put("/:id", authenticateToken, async (req, res) => {
       }
     }
 
+    const safeVenue = venue ? String(venue).trim().substring(0, 255) : null;
+    if (containsProfanity(title) || containsProfanity(description || "") || containsProfanity(safeVenue || "")) {
+      return res.status(400).json({ error: "Inappropriate content is not allowed" });
+    }
+
     const safeState = state ? String(state).trim().substring(0, 49) : null;
     const safeCity = city ? String(city).trim().substring(0, 100) : null;
     const safeZip = zip_code ? String(zip_code).trim().substring(0, 10) : null;
-    const safeVenue = venue ? String(venue).trim().substring(0, 255) : null;
     const safeAddressLine1 = address_line1 ? String(address_line1).trim().substring(0, 255) : null;
 
     let coords = null;
@@ -870,6 +879,9 @@ router.post("/:id/notify-attendees", authenticateToken, async (req, res) => {
     if (!messageTrimmed) {
       return res.status(400).json({ message: "Message is required" });
     }
+    if (containsProfanity(messageTrimmed)) {
+      return res.status(400).json({ error: "Inappropriate content is not allowed" });
+    }
     const [eventRows] = await pool.execute(
       "SELECT id, created_by FROM events WHERE id = ? LIMIT 1",
       [eventId]
@@ -943,6 +955,7 @@ router.post("/:id/announcements", authenticateToken, async (req, res) => {
     const messageTrimmed = message != null ? String(message).trim() : "";
     if (!eventId || isNaN(eventId)) return res.status(400).json({ message: "Invalid event ID" });
     if (!messageTrimmed) return res.status(400).json({ message: "Message is required" });
+    if (containsProfanity(messageTrimmed)) return res.status(400).json({ error: "Inappropriate content is not allowed" });
     if (!userId || !Number.isFinite(userId)) return res.status(401).json({ message: "Authentication required" });
 
     const [eventRows] = await pool.execute("SELECT id, created_by FROM events WHERE id = ? LIMIT 1", [eventId]);
@@ -1089,6 +1102,9 @@ router.post("/:id/reviews", authenticateToken, async (req, res) => {
     const [existing] = await pool.execute("SELECT id FROM event_reviews WHERE event_id = ? AND user_id = ?", [eventId, userId]);
     const commentStr = comment != null ? String(comment).trim().substring(0, 2000) : null;
     const photoStr = photoUrl != null ? String(photoUrl).trim().substring(0, 500) : null;
+    if (commentStr && containsProfanity(commentStr)) {
+      return res.status(400).json({ error: "Inappropriate content is not allowed" });
+    }
     if (existing && existing.length > 0) {
       await pool.execute(
         "UPDATE event_reviews SET rating = ?, comment = ?, photo_url = ? WHERE event_id = ? AND user_id = ?",
@@ -1146,6 +1162,7 @@ router.post("/:id/discussion", authenticateToken, async (req, res) => {
     const msg = message != null ? String(message).trim() : "";
     if (!msg) return res.status(400).json({ message: "Message is required" });
     if (msg.length > 2000) return res.status(400).json({ message: "Message too long" });
+    if (containsProfanity(msg)) return res.status(400).json({ error: "Inappropriate content is not allowed" });
     await pool.execute(
       "INSERT INTO event_discussion (event_id, user_id, message) VALUES (?, ?, ?)",
       [eventId, userId, msg]

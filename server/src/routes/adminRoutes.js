@@ -1,6 +1,7 @@
 const express = require("express");
 const { pool } = require("../db");
 const { authenticateToken, authorize } = require("../middleware/auth");
+const { containsProfanity } = require("../utils/contentFilter");
 
 const router = express.Router();
 
@@ -724,6 +725,7 @@ router.post("/categories", async (req, res) => {
   try {
     const name = req.body.name != null ? String(req.body.name).trim().substring(0, 100) : "";
     if (!name) return res.status(400).json({ message: "Category name is required" });
+    if (containsProfanity(name)) return res.status(400).json({ error: "Inappropriate content is not allowed" });
     await pool.execute("INSERT INTO categories (name, sort_order) VALUES (?, 0)", [name]);
     const [rows] = await pool.execute("SELECT id, name, sort_order FROM categories WHERE name = ? ORDER BY id DESC LIMIT 1", [name]);
     const row = rows && rows[0] ? rows[0] : null;
@@ -742,6 +744,7 @@ router.put("/categories/:id", async (req, res) => {
     if (!Number.isFinite(id)) return res.status(400).json({ message: "Invalid id" });
     const name = req.body.name != null ? String(req.body.name).trim().substring(0, 100) : "";
     if (!name) return res.status(400).json({ message: "Category name is required" });
+    if (containsProfanity(name)) return res.status(400).json({ error: "Inappropriate content is not allowed" });
     const [r] = await pool.execute("UPDATE categories SET name = ? WHERE id = ?", [name, id]);
     if (!r || r.affectedRows === 0) return res.status(404).json({ message: "Category not found" });
     return res.status(200).json({ message: "Updated", id, name });

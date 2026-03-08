@@ -1,6 +1,7 @@
 const express = require("express");
 const { pool } = require("../db");
 const { authenticateToken, authorize } = require("../middleware/auth");
+const { containsProfanity } = require("../utils/contentFilter");
 
 const router = express.Router();
 
@@ -70,6 +71,9 @@ router.post("/", authenticateToken, async (req, res) => {
     const orgName = organizationName != null ? String(organizationName).trim().substring(0, 255) : null;
     const types = eventTypes != null ? String(eventTypes).trim().substring(0, 2000) : null;
     const extra = additionalInfo != null ? String(additionalInfo).trim().substring(0, 2000) : null;
+    if (containsProfanity(orgName || "") || containsProfanity(reasonTrimmed) || (extra && containsProfanity(extra))) {
+      return res.status(400).json({ error: "Inappropriate content is not allowed" });
+    }
 
     await pool.execute(
       `INSERT INTO organizer_signups (user_id, organization_name, event_types, reason, additional_info, status)

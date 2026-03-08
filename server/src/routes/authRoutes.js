@@ -8,6 +8,7 @@ const { signToken, setAuthCookie } = require("../utils/jwt");
 const { sendMail, getMode } = require("../utils/mailer");
 const { authenticateToken } = require("../middleware/auth");
 const { pool } = require("../db");
+const { containsProfanity } = require("../utils/contentFilter");
 
 const router = express.Router();
 
@@ -63,6 +64,9 @@ router.post("/auth/register", registerValid, async (req, res) => {
     const v = handleValidation(req, res);
     if (v) return v;
     const { firstName, lastName, email, password } = req.body;
+    if (containsProfanity(firstName) || containsProfanity(lastName)) {
+      return res.status(400).json({ error: "Inappropriate content is not allowed" });
+    }
     const emailNormalized = normalizeEmail(email);
     const role = REGISTER_DEFAULT_ROLE;
     const existingUser = await User.findOne({

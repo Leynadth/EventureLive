@@ -58,7 +58,7 @@ async function handleResponse(response) {
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.message || `Request failed: ${response.status}`);
+    throw new Error(data.error || data.message || `Request failed: ${response.status}`);
   }
 
   return data;
@@ -207,7 +207,7 @@ export async function getEventAnnouncements(eventId) {
     const response = await fetch(`${baseUrl}/events/${eventId}/announcements`, { method: "GET" });
     if (!response.ok) {
       const err = await response.json().catch(() => ({ message: "Failed to load announcements" }));
-      throw new Error(err.message || "Failed to load announcements");
+      throw new Error(err.error || err.message || "Failed to load announcements");
     }
     return await response.json();
   } catch (error) {
@@ -908,7 +908,7 @@ export async function getAdminStats() {
     });
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ message: `HTTP ${response.status}` }));
-      throw new Error(errorData.message || `Failed to fetch stats: ${response.status}`);
+      throw new Error(errorData.error || errorData.message || `Failed to fetch stats: ${response.status}`);
     }
     return await handleResponse(response);
   } catch (error) {
@@ -927,7 +927,7 @@ export async function getAllEvents() {
     });
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ message: `HTTP ${response.status}` }));
-      throw new Error(errorData.message || `Failed to fetch events: ${response.status}`);
+      throw new Error(errorData.error || errorData.message || `Failed to fetch events: ${response.status}`);
     }
     return await handleResponse(response);
   } catch (error) {
@@ -946,7 +946,7 @@ export async function getAdminEventDetails(eventId) {
   });
   if (!response.ok) {
     const err = await response.json().catch(() => ({ message: "Failed to load event" }));
-    throw new Error(err.message || "Failed to load event details");
+    throw new Error(err.error || err.message || "Failed to load event details");
   }
   return await response.json();
 }
