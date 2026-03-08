@@ -111,7 +111,7 @@ router.get("/", authenticateToken, async (req, res) => {
       return res.json({ organizerSignup: null, dismissedApprovedSignupId: null, messages: [], unreadCount: 0 });
     }
     console.error("Get notifications error:", err);
-    return res.status(500).json({ message: err.message || "Failed to load notifications" });
+    return res.status(500).json({ message: "Failed to load notifications" });
   }
 });
 
@@ -146,7 +146,7 @@ router.post("/dismiss-signup/:signupId", authenticateToken, async (req, res) => 
       return res.status(200).json({ message: "Dismissed" });
     }
     console.error("Dismiss signup notification error:", err);
-    return res.status(500).json({ message: err.message || "Failed to dismiss" });
+    return res.status(500).json({ message: "Failed to dismiss" });
   }
 });
 
@@ -172,7 +172,7 @@ router.post("/mark-viewed", authenticateToken, async (req, res) => {
     return res.status(200).json({ message: "OK" });
   } catch (err) {
     console.error("Mark notifications viewed error:", err);
-    return res.status(500).json({ message: err.message || "Failed to update" });
+    return res.status(500).json({ message: "Failed to update" });
   }
 });
 
@@ -190,7 +190,7 @@ router.delete("/", authenticateToken, async (req, res) => {
       return res.status(200).json({ message: "Notifications cleared" });
     }
     console.error("Clear notifications error:", err);
-    return res.status(500).json({ message: err.message || "Failed to clear" });
+    return res.status(500).json({ message: "Failed to clear" });
   }
 });
 
@@ -215,7 +215,7 @@ router.patch("/:id/read", authenticateToken, async (req, res) => {
       return res.status(404).json({ message: "Notification not found" });
     }
     console.error("Mark notification read error:", err);
-    return res.status(500).json({ message: err.message || "Failed to update" });
+    return res.status(500).json({ message: "Failed to update" });
   }
 });
 

@@ -262,13 +262,12 @@ router.post("/", authenticateToken, authorize(["organizer", "admin"]), async (re
     if (code === "ER_NO_SUCH_TABLE" || code === "42P01") {
       errorMessage = "Database table not found. Please check database setup.";
     } else if (code === "ER_BAD_FIELD_ERROR" || code === "42703") {
-      errorMessage = `Database column error: ${error.sqlMessage || error.message || "Missing required column"}. Database setup required.`;
+      errorMessage = "Database setup required.";
     } else if (code === "ER_DUP_ENTRY" || code === "23505") {
       errorMessage = "Duplicate entry. This event may already exist.";
-    } else if (error.sqlMessage || error.message) {
-      errorMessage = `Database error: ${error.sqlMessage || error.message}`;
+    } else {
+      errorMessage = "Failed to create event";
     }
-    
     return res.status(500).json({ message: errorMessage });
   }
 });
@@ -493,14 +492,7 @@ router.get("/", async (req, res) => {
         stack: error.stack,
       });
     }
-    return res.status(500).json({ 
-      message: "Failed to fetch events",
-      ...(process.env.NODE_ENV !== "production" && { 
-        error: error.message,
-        sqlError: error.sqlMessage,
-        code: error.code,
-      })
-    });
+    return res.status(500).json({ message: "Failed to fetch events" });
   }
 });
 
@@ -823,9 +815,9 @@ router.put("/:id", authenticateToken, async (req, res) => {
     console.error("Failed to update event:", error.message);
     let errorMessage = "Failed to update event";
     if (error.code) {
-      errorMessage = `Database error: ${error.sqlMessage || error.message}`;
-    } else if (error.message) {
-      errorMessage = error.message;
+      errorMessage = "Failed to update event";
+    } else {
+      errorMessage = "Failed to update event";
     }
     return res.status(500).json({ message: errorMessage });
   }
@@ -906,7 +898,7 @@ router.post("/:id/notify-attendees", authenticateToken, async (req, res) => {
       return res.status(500).json({ message: "Notifications are not set up. Run the database migration." });
     }
     console.error("Notify attendees error:", err);
-    return res.status(500).json({ message: err.message || "Failed to send message" });
+    return res.status(500).json({ message: "Failed to send message" });
   }
 });
 
@@ -938,7 +930,7 @@ router.get("/:id/announcements", async (req, res) => {
   } catch (err) {
     if (err.code === "42P01") return res.status(200).json([]);
     console.error("Get announcements error:", err);
-    return res.status(500).json({ message: err.message || "Failed to load announcements" });
+    return res.status(500).json({ message: "Failed to load announcements" });
   }
 });
 
@@ -993,7 +985,7 @@ router.post("/:id/announcements", authenticateToken, async (req, res) => {
     });
   } catch (err) {
     console.error("Post announcement error:", err);
-    return res.status(500).json({ message: err.message || "Failed to send announcement" });
+    return res.status(500).json({ message: "Failed to send announcement" });
   }
 });
 
@@ -1023,7 +1015,7 @@ router.delete("/:id/announcements/:announcementId", authenticateToken, async (re
   } catch (err) {
     if (err.code === "42P01") return res.status(200).json({ message: "Announcement removed from wall" });
     console.error("Delete announcement error:", err);
-    return res.status(500).json({ message: err.message || "Failed to remove announcement" });
+    return res.status(500).json({ message: "Failed to remove announcement" });
   }
 });
 

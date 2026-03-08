@@ -41,8 +41,7 @@ function LoginPage() {
   const returnTo = location.state?.returnTo || "/dashboard";
 
   useEffect(() => {
-    const token = localStorage.getItem("eventure_token");
-    if (token && user) {
+    if (user) {
       if (user.role === "admin") {
         navigate("/admin", { replace: true });
         return;
@@ -61,7 +60,6 @@ function LoginPage() {
     setLoading(true);
     try {
       const data = await login(email.trim().toLowerCase(), password);
-      if (data.token) localStorage.setItem("eventure_token", data.token);
       if (data.user) setUser(data.user);
       if (data.user?.role === "admin") {
         navigate("/admin", { replace: true });

@@ -137,7 +137,6 @@ function MyAccountPage() {
       setDeleteAccountLoading(true);
       await deleteAccount(deleteAccountCode);
       await logout();
-      localStorage.removeItem("eventure_token");
       setUser(null);
       navigate("/login", { replace: true });
     } catch (err) {

@@ -4,6 +4,7 @@ import { getFavorites, removeFavorite, clearAllFavorites, checkRSVPStatus } from
 import AppShell from "../../components/layout/AppShell";
 import EventCard from "../../components/events/EventCard";
 import { useNotification } from "../../contexts/NotificationContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -48,6 +49,7 @@ const SORT_OPTIONS = [
 
 function FavoritesPage() {
   const { toast } = useNotification();
+  const { user } = useAuth();
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -58,8 +60,7 @@ function FavoritesPage() {
   const [clearAllConfirm, setClearAllConfirm] = useState(false);
 
   const checkRSVPsForEvents = async (eventIds) => {
-    const token = localStorage.getItem("eventure_token");
-    if (!token) {
+    if (!user) {
       setRsvpMap(Object.fromEntries(eventIds.map((id) => [id, false])));
       return;
     }
@@ -85,8 +86,7 @@ function FavoritesPage() {
       try {
         setLoading(true);
         setError("");
-        const token = localStorage.getItem("eventure_token");
-        if (!token) {
+        if (!user) {
           setError("Please log in to view your favorites");
           setFavorites([]);
           setLoading(false);
@@ -111,7 +111,7 @@ function FavoritesPage() {
       }
     };
     loadFavorites();
-  }, []);
+  }, [user]);
 
   const categoriesInFavorites = useMemo(() => {
     const set = new Set();

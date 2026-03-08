@@ -3,6 +3,7 @@ import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { getEvents, getCategories, getLocationFromCoords, checkFavorite, addFavorite, removeFavorite, checkRSVPStatus } from "../../api";
 import EventCard from "../../components/events/EventCard";
 import { useNotification } from "../../contexts/NotificationContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 const RADIUS_OPTIONS = [5, 10, 15, 20, 25, 30, 40, 50];
 
@@ -92,6 +93,7 @@ function BrowseEventsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useNotification();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [radius, setRadius] = useState(10); 
@@ -126,11 +128,8 @@ function BrowseEventsPage() {
   }, []);
 
   
-  const isAuthenticated = () => {
-    return !!localStorage.getItem("eventure_token");
-  };
+  const isAuthenticated = () => !!user;
 
-  
   const handleZipChange = (e) => {
     const value = e.target.value;
     const digitsOnly = value.replace(/\D/g, "").slice(0, 5);
@@ -173,14 +172,9 @@ function BrowseEventsPage() {
 
   
   const checkFavoritesForEvents = async (eventIds) => {
-    
-    const token = localStorage.getItem("eventure_token");
-    if (!token) {
-      
+    if (!user) {
       const newFavoritesMap = {};
-      eventIds.forEach((id) => {
-        newFavoritesMap[id] = false;
-      });
+      eventIds.forEach((id) => { newFavoritesMap[id] = false; });
       setFavoritesMap(newFavoritesMap);
       return;
     }
@@ -218,14 +212,9 @@ function BrowseEventsPage() {
 
   
   const checkRSVPsForEvents = async (eventIds) => {
-    
-    const token = localStorage.getItem("eventure_token");
-    if (!token) {
-      
+    if (!user) {
       const newRsvpMap = {};
-      eventIds.forEach((id) => {
-        newRsvpMap[id] = false;
-      });
+      eventIds.forEach((id) => { newRsvpMap[id] = false; });
       setRsvpMap(newRsvpMap);
       return;
     }

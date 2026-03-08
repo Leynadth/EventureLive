@@ -22,22 +22,14 @@ export function getImageUrl(path) {
 
 
 function getAuthToken() {
-  return localStorage.getItem("eventure_token");
+  return null;
 }
 
-
 function getFetchOptions(customOptions = {}) {
-  const token = getAuthToken();
   const headers = {
     "Content-Type": "application/json",
     ...customOptions.headers,
   };
-
-  
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
   return {
     ...customOptions,
     headers,
@@ -904,22 +896,16 @@ export async function getMyFollowing() {
 
 export async function getAdminStats() {
   try {
-    console.log("Fetching admin stats from:", `${baseUrl}/admin/stats`);
     const response = await fetch(`${baseUrl}/admin/stats`, {
       ...getFetchOptions(),
       method: "GET",
     });
-    console.log("Stats response status:", response.status, response.statusText);
-    
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ message: `HTTP ${response.status}` }));
-      console.error("Stats error response:", errorData);
       throw new Error(errorData.message || `Failed to fetch stats: ${response.status}`);
     }
-    
     return await handleResponse(response);
   } catch (error) {
-    console.error("getAdminStats error:", error);
     if (error instanceof TypeError && error.message === "Failed to fetch") {
       throw new Error("Unable to connect to server. Please check if the server is running.");
     }
@@ -929,22 +915,16 @@ export async function getAdminStats() {
 
 export async function getAllEvents() {
   try {
-    console.log("Fetching all events from:", `${baseUrl}/admin/events`);
     const response = await fetch(`${baseUrl}/admin/events`, {
       ...getFetchOptions(),
       method: "GET",
     });
-    console.log("Response status:", response.status, response.statusText);
-    
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ message: `HTTP ${response.status}` }));
-      console.error("Error response:", errorData);
       throw new Error(errorData.message || `Failed to fetch events: ${response.status}`);
     }
-    
     return await handleResponse(response);
   } catch (error) {
-    console.error("getAllEvents error:", error);
     if (error instanceof TypeError && error.message === "Failed to fetch") {
       throw new Error("Unable to connect to server. Please check if the server is running.");
     }

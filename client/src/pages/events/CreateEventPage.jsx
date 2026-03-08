@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link, useParams } from "react-router-dom";
 import AppShell from "../../components/layout/AppShell";
-import { useUserRole } from "../../contexts/AuthContext";
+import { useUserRole, useAuth } from "../../contexts/AuthContext";
 import { useNotification } from "../../contexts/NotificationContext";
 import { createEvent, updateEvent, uploadEventImage, getEventById, deleteEvent, getCategories } from "../../api";
 import AddressAutocomplete from "../../components/shared/AddressAutocomplete";
@@ -10,6 +10,7 @@ function CreateEventPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const role = useUserRole();
+  const { user } = useAuth();
   const { toast, confirm } = useNotification();
   const isEditMode = !!id;
 
@@ -79,15 +80,10 @@ function CreateEventPage() {
         setLoadingEvent(true);
         setError("");
         const event = await getEventById(id);
-
-        
-        const token = localStorage.getItem("eventure_token");
-        if (!token) {
+        if (!user) {
           navigate("/my-events");
           return;
         }
-
-        
         const startDate = new Date(event.starts_at);
         const endDate = event.ends_at ? new Date(event.ends_at) : null;
 

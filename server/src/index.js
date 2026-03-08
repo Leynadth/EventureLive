@@ -35,40 +35,31 @@ if (!process.env.DATABASE_URL && !process.env.DB_NAME) {
 
 app.set("trust proxy", 1);
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:5174",
-];
-if (process.env.FRONTEND_URL) {
-  const url = process.env.FRONTEND_URL.replace(/\/$/, "");
-  if (!allowedOrigins.includes(url)) allowedOrigins.push(url);
-}
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 
+const frontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, "") : null;
+const allowedOrigins = frontendUrl ? [frontendUrl] : ["http://localhost:5173", "http://localhost:5174"];
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
-    if (origin.endsWith(".pages.dev")) return callback(null, true);
-    if (origin.endsWith(".vercel.app")) return callback(null, true);
     callback(new Error("Not allowed by CORS"));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
-
 app.use(cors(corsOptions));
-app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 10,
   message: { message: "Too many requests, try again later." },
 });
 app.use((req, res, next) => {
-  if (/\/api\/auth\/(login|register|forgot-password|reset-password-with-code)/.test(req.originalUrl || req.path)) {
+  if (/\/api\/auth\/(login|register|forgot-password|reset-password-with-code|reset-password|verify-reset-code)/.test(req.originalUrl || req.path)) {
     return authLimiter(req, res, next);
   }
   next();

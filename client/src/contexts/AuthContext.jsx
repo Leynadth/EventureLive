@@ -7,38 +7,16 @@ export function AuthProvider({ children }) {
   const [user, setUserState] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("eventure_token");
-    if (!token) {
-      setUserState(null);
-      return;
-    }
-    const stored = localStorage.getItem("eventure_user");
-    if (stored) {
-      try {
-        setUserState(JSON.parse(stored));
-      } catch {
-        setUserState(null);
-      }
-    }
     getProfile()
       .then((data) => {
-        if (data?.user) {
-          setUserState(data.user);
-          localStorage.setItem("eventure_user", JSON.stringify(data.user));
-        }
+        if (data?.user) setUserState(data.user);
+        else setUserState(null);
       })
-      .catch(() => {
-        
-      });
+      .catch(() => setUserState(null));
   }, []);
 
   const setUser = (nextUser) => {
     setUserState(nextUser);
-    if (nextUser) {
-      localStorage.setItem("eventure_user", JSON.stringify(nextUser));
-    } else {
-      localStorage.removeItem("eventure_user");
-    }
   };
 
   return (

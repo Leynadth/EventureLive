@@ -1,5 +1,6 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
+const { body, validationResult } = require("express-validator");
 const { Op } = require("sequelize");
 const User = require("../models/User");
 const PasswordResetCode = require("../models/PasswordResetCode");
@@ -9,7 +10,6 @@ const { authenticateToken } = require("../middleware/auth");
 const { pool } = require("../db");
 
 const router = express.Router();
-
 
 function formatUserResponse(user) {
   return {
@@ -23,16 +23,20 @@ function formatUserResponse(user) {
   };
 }
 
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-
 function normalizeEmail(email) {
   return String(email).trim().toLowerCase();
 }
 
-
 const REGISTER_DEFAULT_ROLE = "user";
+
+function handleValidation(req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const msg = errors.array().map((e) => e.msg).join(" ");
+    return res.status(400).json({ message: msg || "Validation failed" });
+  }
+  return null;
+}
 
 
 function generate6DigitCode() {
@@ -40,7 +44,7 @@ function generate6DigitCode() {
 }
 
 async function hashCode(code) {
-  return await bcrypt.hash(code, 10);
+  return await bcrypt.hash(code, 12);
 }
 
 async function compareCode(code, codeHash) {
@@ -48,39 +52,27 @@ async function compareCode(code, codeHash) {
 }
 
 
-router.post("/auth/register", async (req, res) => {
+const registerValid = [
+  body("firstName").trim().notEmpty().withMessage("First name is required").escape(),
+  body("lastName").trim().notEmpty().withMessage("Last name is required").escape(),
+  body("email").trim().notEmpty().withMessage("Email is required").isEmail().withMessage("Invalid email format").normalizeEmail(),
+  body("password").trim().notEmpty().withMessage("Password is required").isLength({ min: 8 }).withMessage("Password must be at least 8 characters"),
+];
+router.post("/auth/register", registerValid, async (req, res) => {
   try {
+    const v = handleValidation(req, res);
+    if (v) return v;
     const { firstName, lastName, email, password } = req.body;
     const emailNormalized = normalizeEmail(email);
-
-    
     const role = REGISTER_DEFAULT_ROLE;
-
-    
-    if (!firstName || !lastName || !email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-
-    
-    if (!EMAIL_REGEX.test(emailNormalized)) {
-      return res.status(400).json({ message: "Invalid email format" });
-    }
-
-    
-    if (String(password).length < 8) {
-      return res.status(400).json({ message: "Password must be at least 8 characters" });
-    }
-
-    
     const existingUser = await User.findOne({
       where: { email: emailNormalized },
     });
     if (existingUser) {
-      return res.status(409).json({ message: "Email already in use" });
+      return res.status(400).json({ message: "Unable to complete registration. Please try again." });
     }
 
-    
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 12);
 
     
     const user = await User.create({
@@ -98,25 +90,23 @@ router.post("/auth/register", async (req, res) => {
   } catch (error) {
     console.error("Registration error:", error);
     if (error.name === "SequelizeUniqueConstraintError") {
-      return res.status(409).json({ message: "Email already in use" });
+      return res.status(400).json({ message: "Unable to complete registration. Please try again." });
     }
     return res.status(500).json({ message: "Registration failed" });
   }
 });
 
 
-router.post("/auth/login", async (req, res) => {
+const loginValid = [
+  body("email").trim().notEmpty().withMessage("Invalid credentials").normalizeEmail(),
+  body("password").trim().notEmpty().withMessage("Invalid credentials"),
+];
+router.post("/auth/login", loginValid, async (req, res) => {
   try {
+    const v = handleValidation(req, res);
+    if (v) return v;
     const { email, password } = req.body;
-
-    
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
-    }
-
     const emailNormalized = normalizeEmail(email);
-
-    
     const user = await User.findOne({
       where: { email: emailNormalized },
     });
@@ -146,7 +136,6 @@ router.post("/auth/login", async (req, res) => {
     
     return res.status(200).json({
       message: "Logged in",
-      token: token,
       user: formatUserResponse(user),
     });
   } catch (error) {
@@ -162,17 +151,15 @@ router.post("/auth/logout", (req, res) => {
 });
 
 
-router.post("/auth/forgot-password", async (req, res) => {
+const forgotPasswordValid = [
+  body("email").trim().notEmpty().withMessage("Email is required").isEmail().withMessage("Invalid email format").normalizeEmail(),
+];
+router.post("/auth/forgot-password", forgotPasswordValid, async (req, res) => {
   try {
+    const v = handleValidation(req, res);
+    if (v) return v;
     const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ message: "Email is required" });
-    }
-
     const emailNormalized = normalizeEmail(email);
-
-    
     const genericMessage = "If that email exists, a verification code was sent.";
 
     
@@ -246,27 +233,17 @@ router.post("/auth/forgot-password", async (req, res) => {
 });
 
 
-router.post("/auth/reset-password-with-code", async (req, res) => {
+const resetWithCodeValid = [
+  body("email").trim().notEmpty().withMessage("Email, code, and new password are required").isEmail().normalizeEmail(),
+  body("code").trim().notEmpty().withMessage("Invalid or expired code").isLength({ min: 6, max: 6 }).withMessage("Invalid or expired code").matches(/^\d{6}$/).withMessage("Invalid or expired code"),
+  body("newPassword").trim().notEmpty().withMessage("Email, code, and new password are required").isLength({ min: 8 }).withMessage("Password must be at least 8 characters"),
+];
+router.post("/auth/reset-password-with-code", resetWithCodeValid, async (req, res) => {
   try {
+    const v = handleValidation(req, res);
+    if (v) return v;
     const { email, code, newPassword } = req.body;
-
-    if (!email || !code || !newPassword) {
-      return res.status(400).json({ message: "Email, code, and new password are required" });
-    }
-
     const emailNormalized = normalizeEmail(email);
-
-    
-    if (!/^\d{6}$/.test(String(code))) {
-      return res.status(400).json({ message: "Invalid or expired code" });
-    }
-
-    
-    if (String(newPassword).length < 8) {
-      return res.status(400).json({ message: "Password must be at least 8 characters" });
-    }
-
-    
     const user = await User.findOne({
       where: { email: emailNormalized },
     });
@@ -296,10 +273,9 @@ router.post("/auth/reset-password-with-code", async (req, res) => {
     }
 
     
-    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    const newPasswordHash = await bcrypt.hash(newPassword, 12);
     await user.update({ passwordHash: newPasswordHash });
 
-    
     await resetCode.update({ used_at: new Date() });
 
     return res.status(200).json({ message: "Password reset successful" });
@@ -309,29 +285,16 @@ router.post("/auth/reset-password-with-code", async (req, res) => {
   }
 });
 
-
-router.post("/auth/verify-reset-code", async (req, res) => {
+const verifyResetCodeValid = [
+  body("email").trim().notEmpty().withMessage("Email and code are required").isEmail().normalizeEmail(),
+  body("code").trim().notEmpty().withMessage("Invalid or expired code").isLength({ min: 6, max: 6 }).matches(/^\d{6}$/).withMessage("Invalid or expired code"),
+];
+router.post("/auth/verify-reset-code", verifyResetCodeValid, async (req, res) => {
   try {
+    const v = handleValidation(req, res);
+    if (v) return v;
     const { email, code } = req.body;
-
-    
-    if (!email || !code) {
-      return res.status(400).json({ message: "Email and code are required" });
-    }
-
     const emailNormalized = normalizeEmail(email);
-
-    
-    if (!EMAIL_REGEX.test(emailNormalized)) {
-      return res.status(400).json({ message: "Invalid email format" });
-    }
-
-    
-    if (!/^\d{6}$/.test(String(code))) {
-      return res.status(400).json({ message: "Invalid or expired code" });
-    }
-
-    
     const user = await User.findOne({
       where: { email: emailNormalized },
     });
@@ -371,33 +334,12 @@ router.post("/auth/verify-reset-code", async (req, res) => {
 });
 
 
-router.post("/auth/reset-password", async (req, res) => {
+router.post("/auth/reset-password", resetWithCodeValid, async (req, res) => {
   try {
+    const v = handleValidation(req, res);
+    if (v) return v;
     const { email, code, newPassword } = req.body;
-
-    
-    if (!email || !code || !newPassword) {
-      return res.status(400).json({ message: "Email, code, and new password are required" });
-    }
-
     const emailNormalized = normalizeEmail(email);
-
-    
-    if (!EMAIL_REGEX.test(emailNormalized)) {
-      return res.status(400).json({ message: "Invalid email format" });
-    }
-
-    
-    if (!/^\d{6}$/.test(String(code))) {
-      return res.status(400).json({ message: "Invalid or expired code" });
-    }
-
-    
-    if (String(newPassword).length < 8) {
-      return res.status(400).json({ message: "Password must be at least 8 characters" });
-    }
-
-    
     const user = await User.findOne({
       where: { email: emailNormalized },
     });
@@ -432,12 +374,10 @@ router.post("/auth/reset-password", async (req, res) => {
     }
 
     
-    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    const newPasswordHash = await bcrypt.hash(newPassword, 12);
 
-    
     await user.update({ passwordHash: newPasswordHash });
 
-    
     await resetCode.update({ used_at: new Date() });
 
     if (process.env.NODE_ENV !== "production") {
@@ -506,16 +446,15 @@ router.get("/auth/profile", authenticateToken, async (req, res) => {
 });
 
 
-router.put("/auth/profile", authenticateToken, async (req, res) => {
+const profileUpdateValid = [
+  body("showContactInfo").exists().withMessage("showContactInfo is required").isBoolean().withMessage("showContactInfo must be true or false"),
+];
+router.put("/auth/profile", authenticateToken, profileUpdateValid, async (req, res) => {
   try {
+    const v = handleValidation(req, res);
+    if (v) return v;
     const userId = req.user.id;
     const { showContactInfo } = req.body;
-
-    if (showContactInfo === undefined) {
-      return res.status(400).json({ message: "showContactInfo is required" });
-    }
-
-    
     await pool.execute(
       "UPDATE users SET show_contact_info = ? WHERE id = ?",
       [!!showContactInfo, userId]
@@ -631,10 +570,9 @@ router.post("/auth/change-password", authenticateToken, async (req, res) => {
     }
 
     
-    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    const newPasswordHash = await bcrypt.hash(newPassword, 12);
     await user.update({ passwordHash: newPasswordHash });
 
-    
     await resetCode.update({ used_at: new Date() });
 
     return res.status(200).json({ message: "Password changed successfully" });

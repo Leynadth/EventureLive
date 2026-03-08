@@ -151,10 +151,7 @@ router.get("/stats", async (req, res) => {
   } catch (error) {
     console.error("Failed to fetch admin stats:", error);
     console.error("Error details:", error.message, error.sqlMessage);
-    return res.status(500).json({ 
-      message: "Failed to fetch admin statistics",
-      error: process.env.NODE_ENV !== "production" ? error.message : undefined
-    });
+    return res.status(500).json({ message: "Failed to fetch admin statistics" });
   }
 });
 
@@ -207,11 +204,7 @@ router.get("/events", async (req, res) => {
       sql: error.sql,
       stack: error.stack,
     });
-    return res.status(500).json({ 
-      message: "Failed to fetch events",
-      error: process.env.NODE_ENV !== "production" ? error.message : undefined,
-      sqlError: process.env.NODE_ENV !== "production" ? error.sqlMessage : undefined
-    });
+    return res.status(500).json({ message: "Failed to fetch events" });
   }
 });
 
@@ -344,10 +337,7 @@ router.get("/users", async (req, res) => {
     return res.status(200).json(rows || []);
   } catch (error) {
     console.error("Failed to fetch users:", error);
-    return res.status(500).json({ 
-      message: "Failed to fetch users",
-      error: process.env.NODE_ENV !== "production" ? error.message : undefined
-    });
+    return res.status(500).json({ message: "Failed to fetch users" });
   }
 });
 
@@ -444,10 +434,7 @@ router.get("/users/:id", async (req, res) => {
     });
   } catch (error) {
     console.error("Failed to fetch user details:", error);
-    return res.status(500).json({ 
-      message: "Failed to fetch user details",
-      error: process.env.NODE_ENV !== "production" ? error.message : undefined
-    });
+    return res.status(500).json({ message: "Failed to fetch user details" });
   }
 });
 
@@ -486,10 +473,7 @@ router.patch("/users/:id", async (req, res) => {
     return res.status(200).json({ message: "Role updated", role: newRole });
   } catch (error) {
     console.error("Failed to update user role:", error);
-    return res.status(500).json({
-      message: "Failed to update user role",
-      error: process.env.NODE_ENV !== "production" ? error.message : undefined,
-    });
+    return res.status(500).json({ message: "Failed to update user role" });
   }
 });
 
@@ -525,10 +509,7 @@ router.delete("/users/:id", async (req, res) => {
     return res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
     console.error("Failed to delete user:", error);
-    return res.status(500).json({ 
-      message: "Failed to delete user",
-      error: process.env.NODE_ENV !== "production" ? error.message : undefined
-    });
+    return res.status(500).json({ message: "Failed to delete user" });
   }
 });
 
@@ -582,10 +563,7 @@ router.delete("/users/:userId/unattend/:eventId", async (req, res) => {
     return res.status(200).json({ message: "User unattended from event successfully" });
   } catch (error) {
     console.error("Failed to unattend user from event:", error);
-    return res.status(500).json({
-      message: "Failed to unattend user from event",
-      error: process.env.NODE_ENV !== "production" ? error.message : undefined
-    });
+    return res.status(500).json({ message: "Failed to unattend user from event" });
   }
 });
 
@@ -702,10 +680,7 @@ router.get("/analytics", async (req, res) => {
     });
   } catch (error) {
     console.error("Failed to fetch analytics:", error);
-    return res.status(500).json({ 
-      message: "Failed to fetch analytics",
-      error: process.env.NODE_ENV !== "production" ? error.message : undefined
-    });
+    return res.status(500).json({ message: "Failed to fetch analytics" });
   }
 });
 
@@ -1008,10 +983,7 @@ router.put("/settings/hero", authenticateToken, authorize(["admin"]), async (req
     });
   } catch (error) {
     console.error("Failed to update hero settings:", error);
-    return res.status(500).json({ 
-      message: "Failed to update hero background",
-      error: process.env.NODE_ENV !== "production" ? error.message : undefined
-    });
+    return res.status(500).json({ message: "Failed to update hero background" });
   }
 });
 

@@ -100,9 +100,9 @@ router.post("/hero-image", authenticateToken, authorize(["admin"]), (req, res, n
     if (err) {
       if (err instanceof multer.MulterError) {
         if (err.code === "LIMIT_FILE_SIZE") return res.status(400).json({ message: "Image is too large. Max 10MB." });
-        return res.status(400).json({ message: err.message || "Upload error" });
+        return res.status(400).json({ message: "Upload error" });
       }
-      return res.status(400).json({ message: err.message || "Only image files are allowed (JPEG, PNG, GIF, WEBP, AVIF)." });
+      return res.status(400).json({ message: "Only image files are allowed (JPEG, PNG, GIF, WEBP, AVIF)." });
     }
     next();
   });

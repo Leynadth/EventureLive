@@ -25,7 +25,7 @@ router.get("/me", authenticateToken, async (req, res) => {
       return res.json({ signup: null });
     }
     console.error("Get my organizer signup error:", err);
-    return res.status(500).json({ message: err.message || "Failed to load signup status" });
+    return res.status(500).json({ message: "Failed to load signup status" });
   }
 });
 
@@ -83,7 +83,7 @@ router.post("/", authenticateToken, async (req, res) => {
       return res.status(500).json({ message: "Organizer signups are not set up. Database setup required." });
     }
     console.error("Organizer signup error:", err);
-    return res.status(500).json({ message: err.message || "Failed to submit signup" });
+    return res.status(500).json({ message: "Failed to submit signup" });
   }
 });
 

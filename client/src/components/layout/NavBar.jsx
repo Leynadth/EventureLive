@@ -80,7 +80,6 @@ function NavBar() {
     } catch (err) {
       console.error("Logout error:", err);
     } finally {
-      localStorage.removeItem("eventure_token");
       setUser(null);
       setMobileMenuOpen(false);
       navigate("/login", { replace: true });

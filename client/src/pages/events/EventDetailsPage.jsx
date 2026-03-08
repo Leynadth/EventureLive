@@ -267,8 +267,7 @@ function EventDetailsPage() {
   }, [lightboxOpen, event?.main_image, event?.image_2, event?.image_3, event?.image_4]);
 
   const handleFavoriteClick = async () => {
-    const token = localStorage.getItem("eventure_token");
-    if (!token) {
+    if (!user) {
       setShowSignInPrompt(true);
       return;
     }
@@ -288,8 +287,7 @@ function EventDetailsPage() {
   };
 
   const handleRSVP = async () => {
-    const token = localStorage.getItem("eventure_token");
-    if (!token) {
+    if (!user) {
       setShowSignInPrompt(true);
       return;
     }
@@ -321,8 +319,7 @@ function EventDetailsPage() {
     e.preventDefault();
     const msg = commentMessage.trim();
     if (!msg) return;
-    const token = localStorage.getItem("eventure_token");
-    if (!token) {
+    if (!user) {
       setShowSignInPrompt(true);
       return;
     }
