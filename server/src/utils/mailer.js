@@ -76,6 +76,9 @@ function initTransporter() {
 
 async function verifyTransport() {
   logSmtpConfig();
+  if (process.env.NODE_ENV === "production") {
+    console.log(`📧 BREVO_API_KEY: ${process.env.BREVO_API_KEY ? "set" : "not set"}`);
+  }
 
   if (process.env.BREVO_API_KEY) {
     mailerMode = "BREVO_API";
