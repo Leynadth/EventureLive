@@ -83,7 +83,7 @@ app.get("/health", async (req, res) => {
       ok: true,
       email: emailMode,
       smtpConfigured: isSmtpConfigured(),
-      emailReady: emailMode === "SMTP",
+      emailReady: emailMode === "SMTP" || emailMode === "BREVO_API",
     });
   } catch (err) {
     res.status(503).json({ ok: false, error: "Database unreachable" });

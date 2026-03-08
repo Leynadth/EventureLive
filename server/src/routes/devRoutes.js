@@ -20,17 +20,17 @@ router.get("/dev/test-email", async (req, res) => {
     console.log(`\n🧪 [TEST] Attempting to send test email to: ${to}`);
     const result = await sendMail({
       to,
-      subject: "Brevo SMTP Test",
-      text: "If you get this, Brevo SMTP is working.",
+      subject: "Test email",
+      text: "Test email received.",
     });
 
     if (result.ok) {
       return res.status(200).json({
         ok: true,
         mode: result.mode,
-        message: result.mode === "smtp" 
-          ? "Email sent successfully via SMTP" 
-          : "Email logged to console (SMTP not configured or failed)",
+        message: result.mode === "smtp" || result.mode === "brevo_api"
+          ? "Email sent successfully"
+          : "Email logged to console (not configured or failed)",
       });
     } else {
       return res.status(500).json({

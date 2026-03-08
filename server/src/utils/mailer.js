@@ -1,31 +1,39 @@
 require("dotenv").config();
 const nodemailer = require("nodemailer");
 
-let transporter = null;
-let mailerMode = "DEV_FALLBACK"; 
+const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
+let transporter = null;
+let mailerMode = "DEV_FALLBACK";
+
+function parseSender(fromStr) {
+  if (!fromStr || typeof fromStr !== "string") return { name: "Eventure", email: "no-reply@eventure.com" };
+  const trimmed = fromStr.trim();
+  const match = trimmed.match(/^(.+?)\s*<([^>]+)>$/);
+  if (match) return { name: match[1].trim(), email: match[2].trim() };
+  return { name: "Eventure", email: trimmed };
+}
 
 function isSmtpConfigured() {
-  return !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+  return !!(
+    process.env.BREVO_API_KEY ||
+    (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS)
+  );
 }
 
 
 function logSmtpConfig() {
+  const hasBrevoApi = !!process.env.BREVO_API_KEY;
   const hasHost = !!process.env.SMTP_HOST;
-  const hasPort = !!process.env.SMTP_PORT;
   const hasUser = !!process.env.SMTP_USER;
   const hasPass = !!process.env.SMTP_PASS;
-  const hasFrom = !!process.env.SMTP_FROM;
 
   if (process.env.NODE_ENV !== "production") {
-    console.log("\n📧 SMTP Configuration:");
-    console.log(`   SMTP_HOST present: ${hasHost}`);
-    console.log(`   SMTP_PORT present: ${hasPort}`);
-    console.log(`   SMTP_USER present: ${hasUser}`);
-    console.log(`   SMTP_PASS present: ${hasPass}`);
-    console.log(`   SMTP_FROM present: ${hasFrom}`);
+    console.log("\n📧 Email configuration:");
+    console.log(`   BREVO_API_KEY present: ${hasBrevoApi}`);
+    console.log(`   SMTP present: ${hasHost && hasUser && hasPass}`);
   } else if (!isSmtpConfigured()) {
-    console.warn("📧 Production: SMTP env vars missing (SMTP_HOST, SMTP_USER, SMTP_PASS). OTP emails will not be sent.");
+    console.warn("📧 Production: Email not configured.");
   }
 }
 
@@ -49,11 +57,14 @@ function initTransporter() {
     transporter = nodemailer.createTransport({
       host: SMTP_HOST,
       port: SMTP_PORT,
-      secure, 
+      secure,
       auth: {
         user: SMTP_USER,
         pass: SMTP_PASS,
       },
+      connectionTimeout: 20000,
+      greetingTimeout: 10000,
+      socketTimeout: 20000,
     });
     return transporter;
   } catch (error) {
@@ -63,20 +74,22 @@ function initTransporter() {
   }
 }
 
-
 async function verifyTransport() {
   logSmtpConfig();
+
+  if (process.env.BREVO_API_KEY) {
+    mailerMode = "BREVO_API";
+    console.log("✅ Email ready");
+    return true;
+  }
 
   if (!transporter) {
     initTransporter();
   }
 
   if (!transporter) {
-    const msg = "SMTP not configured. Password reset emails will not be sent. Set SMTP_HOST, SMTP_USER, SMTP_PASS (and optionally SMTP_FROM) in Render to enable real email.";
-    console.warn("⚠️  " + msg);
-    if (process.env.NODE_ENV === "production") {
-      console.warn("📧 Production: " + msg);
-    }
+    console.warn("⚠️  Email not configured.");
+    if (process.env.NODE_ENV === "production") console.warn("📧 Production: Email not configured.");
     mailerMode = "DEV_FALLBACK";
     return false;
   }
@@ -88,24 +101,65 @@ async function verifyTransport() {
     return true;
   } catch (error) {
     console.error(`❌ SMTP verify failed: ${error.message}`);
-    const msg = "Email sending disabled. Set SMTP_HOST, SMTP_USER, SMTP_PASS in Render to enable password reset emails.";
-    console.warn("⚠️  " + msg);
-    if (/auth|login|535|credentials/i.test(error.message || "")) {
-      console.warn("⚠️  If using Brevo: use your SMTP key (SMTP & API → SMTP), not your account password or API key.");
-    }
-    if (process.env.NODE_ENV === "production") console.warn("📧 Production: " + msg);
     mailerMode = "DEV_FALLBACK";
     return false;
   }
 }
 
+async function sendMailViaBrevoApi({ to, subject, text, html }) {
+  const apiKey = process.env.BREVO_API_KEY;
+  const fromStr = process.env.SMTP_FROM || "Eventure <no-reply@eventure.com>";
+  const sender = parseSender(fromStr);
+
+  const res = await fetch(BREVO_API_URL, {
+    method: "POST",
+    headers: {
+      "api-key": apiKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      sender: { name: sender.name, email: sender.email },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html || text || "",
+      textContent: text || undefined,
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    let errMsg = `Brevo API ${res.status}: ${body}`;
+    try {
+      const j = JSON.parse(body);
+      if (j.message) errMsg = j.message;
+    } catch (_) {}
+    throw new Error(errMsg);
+  }
+
+  const data = await res.json().catch(() => ({}));
+  return { ok: true, mode: "brevo_api", messageId: data.messageId };
+}
 
 async function sendMail({ to, subject, text, html }) {
   const SMTP_FROM = process.env.SMTP_FROM || "Eventure <no-reply@eventure.com>";
 
+  if (mailerMode === "BREVO_API") {
+    try {
+      const result = await sendMailViaBrevoApi({ to, subject, text, html });
+      console.log(`✅ Email sent to ${to}`);
+      return result;
+    } catch (error) {
+      console.error(`❌ Email send failed for ${to}:`, error.message);
+      if (/401|unauthorized|invalid.*key/i.test(String(error.message))) {
+        console.warn("⚠️  Invalid BREVO_API_KEY.");
+      }
+      return { ok: false, mode: "fallback", error: error.message };
+    }
+  }
+
   if (mailerMode === "DEV_FALLBACK" || !transporter) {
     if (process.env.NODE_ENV === "production") {
-      console.warn(`⚠️ OTP email NOT sent to ${to} (SMTP not configured or verify failed). Set SMTP_HOST, SMTP_USER, SMTP_PASS on the server.`);
+      console.warn(`⚠️ OTP email NOT sent to ${to}.`);
     } else {
       console.log("\n📧 [DEV FALLBACK] Email would be sent:");
       console.log(`   To: ${to}`);
@@ -129,21 +183,13 @@ async function sendMail({ to, subject, text, html }) {
     return { ok: true, mode: "smtp", messageId: info.messageId };
   } catch (error) {
     console.error(`❌ Failed to send email to ${to}:`, error.message);
-    
-    if (error.response) {
-      console.error("   SMTP Response:", error.response);
-    }
-    if (error.responseCode) {
-      console.error("   Response Code:", error.responseCode);
-    }
+    if (error.response) console.error("   SMTP Response:", error.response);
+    if (error.responseCode) console.error("   Response Code:", error.responseCode);
     if (/auth|login|535|credentials/i.test(error.message || String(error.response || ""))) {
-      console.warn("⚠️  If using Brevo: use your SMTP key (SMTP & API → SMTP), not your account password or API key.");
+      console.warn("⚠️  SMTP auth failed.");
     }
-    
-    
     if (process.env.NODE_ENV !== "production") {
-      console.log(`\n📧 [FALLBACK] Email would be sent to: ${to}`);
-      console.log(`   Subject: ${subject}`);
+      console.log(`\n📧 [FALLBACK] Email would be sent to: ${to}, Subject: ${subject}`);
     }
     return { ok: false, mode: "fallback", error: error.message };
   }

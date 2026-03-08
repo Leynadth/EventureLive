@@ -212,7 +212,7 @@ router.post("/auth/forgot-password", forgotPasswordValid, async (req, res) => {
     const emailText = `Your Eventure verification code is: ${code}. It expires in 10 minutes.`;
 
     const currentMode = getMode();
-    console.log(`📧 Sending reset code email to ${emailNormalized} via ${currentMode === "SMTP" ? "smtp" : "fallback"}`);
+    console.log(`📧 Sending reset code email to ${emailNormalized} via ${currentMode === "SMTP" ? "smtp" : currentMode === "BREVO_API" ? "api" : "fallback"}`);
 
     const mailResult = await sendMail({
       to: emailNormalized,
@@ -505,7 +505,7 @@ router.post("/auth/change-password-request", authenticateToken, async (req, res)
 
     const currentMode = getMode();
     if (process.env.NODE_ENV !== "production") {
-      console.log(`📧 Sending password change code to ${emailNormalized} via ${currentMode === "SMTP" ? "smtp" : "fallback"}`);
+      console.log(`📧 Sending password change code to ${emailNormalized} via ${currentMode === "SMTP" ? "smtp" : currentMode === "BREVO_API" ? "api" : "fallback"}`);
     }
 
     const mailResult = await sendMail({
@@ -617,7 +617,7 @@ router.post("/auth/delete-account-request", authenticateToken, async (req, res) 
 
     const currentMode = getMode();
     if (process.env.NODE_ENV !== "production") {
-      console.log(`📧 Sending account deletion code to ${emailNormalized} via ${currentMode === "SMTP" ? "smtp" : "fallback"}`);
+      console.log(`📧 Sending account deletion code to ${emailNormalized} via ${currentMode === "SMTP" ? "smtp" : currentMode === "BREVO_API" ? "api" : "fallback"}`);
     }
 
     const mailResult = await sendMail({
