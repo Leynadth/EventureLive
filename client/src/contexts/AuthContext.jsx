@@ -8,13 +8,28 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+    function finish(userData) {
+      if (cancelled) return;
+      if (userData?.user) setUserState(userData.user);
+      else setUserState(null);
+      setLoading(false);
+    }
     getProfile()
-      .then((data) => {
-        if (data?.user) setUserState(data.user);
-        else setUserState(null);
-      })
-      .catch(() => setUserState(null))
-      .finally(() => setLoading(false));
+      .then((data) => finish(data))
+      .catch(() => {
+        if (cancelled) return;
+        return new Promise((resolve) => setTimeout(resolve, 3000)).then(() => {
+          if (cancelled) return;
+          return getProfile();
+        }).then((data) => finish(data)).catch(() => {
+          if (!cancelled) {
+            setUserState(null);
+            setLoading(false);
+          }
+        });
+      });
+    return () => { cancelled = true; };
   }, []);
 
   const setUser = (nextUser, token) => {
