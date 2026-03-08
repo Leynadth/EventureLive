@@ -21,19 +21,26 @@ export function getImageUrl(path) {
 }
 
 
+const TOKEN_KEY = "eventure_token";
+
 function getAuthToken() {
-  return null;
+  try {
+    return localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
 }
 
 function getFetchOptions(customOptions = {}) {
+  const token = getAuthToken();
   const headers = {
     "Content-Type": "application/json",
     ...customOptions.headers,
   };
+  if (token) headers.Authorization = `Bearer ${token}`;
   return {
     ...customOptions,
     headers,
-    credentials: "include",
   };
 }
 
@@ -744,7 +751,6 @@ export async function uploadEventImage(imageFile) {
     const response = await fetch(`${baseUrl}/upload/event-image`, {
       method: "POST",
       headers,
-      credentials: "include",
       body: formData,
     });
 
@@ -1057,11 +1063,7 @@ export async function getAnalytics() {
 
 export async function getHeroSettings() {
   try {
-    
-    const response = await fetch(`${baseUrl}/admin/settings/hero`, {
-      method: "GET",
-      credentials: "include",
-    });
+    const response = await fetch(`${baseUrl}/admin/settings/hero`, getFetchOptions());
     return await handleResponse(response);
   } catch (error) {
     if (error instanceof TypeError && error.message === "Failed to fetch") {
@@ -1101,7 +1103,6 @@ export async function uploadHeroImage(imageFile) {
     const response = await fetch(`${baseUrl}/upload/hero-image`, {
       method: "POST",
       headers,
-      credentials: "include",
       body: formData,
     });
 
@@ -1124,7 +1125,6 @@ export async function uploadFoundersImage(imageFile) {
     const response = await fetch(`${baseUrl}/upload/founders-image`, {
       method: "POST",
       headers,
-      credentials: "include",
       body: formData,
     });
     return await handleResponse(response);
@@ -1138,7 +1138,7 @@ export async function uploadFoundersImage(imageFile) {
 
 
 export async function getContentSettings() {
-  const response = await fetch(`${baseUrl}/admin/settings/content`, { method: "GET", credentials: "include" });
+  const response = await fetch(`${baseUrl}/admin/settings/content`, { ...getFetchOptions(), method: "GET" });
   return handleResponse(response);
 }
 
@@ -1220,7 +1220,6 @@ export async function uploadProfilePicture(imageFile) {
     const response = await fetch(`${baseUrl}/upload/profile-picture`, {
       method: "POST",
       headers,
-      credentials: "include",
       body: formData,
     });
 

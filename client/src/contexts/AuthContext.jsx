@@ -17,7 +17,16 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const setUser = (nextUser) => {
+  const setUser = (nextUser, token) => {
+    if (nextUser === null) {
+      try {
+        localStorage.removeItem("eventure_token");
+      } catch {}
+    } else if (token) {
+      try {
+        localStorage.setItem("eventure_token", token);
+      } catch {}
+    }
     setUserState(nextUser);
   };
 

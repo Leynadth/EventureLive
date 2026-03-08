@@ -60,7 +60,7 @@ function LoginPage() {
     setLoading(true);
     try {
       const data = await login(email.trim().toLowerCase(), password);
-      if (data.user) setUser(data.user);
+      if (data.user) setUser(data.user, data.token);
       if (data.user?.role === "admin") {
         navigate("/admin", { replace: true });
       } else if (data.user?.role === "user") {

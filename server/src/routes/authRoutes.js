@@ -132,11 +132,10 @@ router.post("/auth/login", loginValid, async (req, res) => {
 
     
     setAuthCookie(res, token);
-
-    
     return res.status(200).json({
       message: "Logged in",
       user: formatUserResponse(user),
+      token,
     });
   } catch (error) {
     console.error("Login error:", error);
