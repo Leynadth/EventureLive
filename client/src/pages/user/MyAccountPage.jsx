@@ -5,6 +5,8 @@ import { useAuth, useCurrentUser, useUserRole } from "../../contexts/AuthContext
 import { useNotification } from "../../contexts/NotificationContext";
 import {
   getProfile,
+  requestChangePasswordCode,
+  changePassword,
   requestDeleteAccountCode,
   deleteAccount,
   logout,
@@ -24,12 +26,19 @@ function MyAccountPage() {
   const [error, setError] = useState("");
 
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
-  const [deleteAccountStep, setDeleteAccountStep] = useState("confirm"); 
+  const [deleteAccountStep, setDeleteAccountStep] = useState("confirm");
   const [deleteAccountCode, setDeleteAccountCode] = useState("");
   const [deleteAccountLoading, setDeleteAccountLoading] = useState(false);
   const [deleteAccountError, setDeleteAccountError] = useState("");
-  
-  
+
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [changePasswordStep, setChangePasswordStep] = useState("request");
+  const [changePasswordCode, setChangePasswordCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [retypePassword, setRetypePassword] = useState("");
+  const [changePasswordLoading, setChangePasswordLoading] = useState(false);
+  const [changePasswordError, setChangePasswordError] = useState("");
+
   const [uploadingPicture, setUploadingPicture] = useState(false);
   const [updatingSettings, setUpdatingSettings] = useState(false);
 
@@ -84,6 +93,62 @@ function MyAccountPage() {
     } finally {
       setDeleteAccountLoading(false);
     }
+  };
+
+  const handleChangePasswordRequest = async () => {
+    try {
+      setChangePasswordLoading(true);
+      setChangePasswordError("");
+      await requestChangePasswordCode();
+      setChangePasswordStep("verify");
+    } catch (err) {
+      setChangePasswordError(err.message || "Failed to send verification code");
+    } finally {
+      setChangePasswordLoading(false);
+    }
+  };
+
+  const handleChangePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setChangePasswordError("");
+
+    if (!/^\d{6}$/.test(changePasswordCode)) {
+      setChangePasswordError("Code must be exactly 6 digits");
+      return;
+    }
+    if (newPassword.length < 8) {
+      setChangePasswordError("Password must be at least 8 characters");
+      return;
+    }
+    if (newPassword !== retypePassword) {
+      setChangePasswordError("Passwords do not match");
+      return;
+    }
+
+    try {
+      setChangePasswordLoading(true);
+      await changePassword(changePasswordCode, newPassword);
+      toast("Password updated successfully.", "success");
+      setShowChangePassword(false);
+      setChangePasswordStep("request");
+      setChangePasswordCode("");
+      setNewPassword("");
+      setRetypePassword("");
+      setChangePasswordError("");
+    } catch (err) {
+      setChangePasswordError(err.message || "Failed to change password");
+    } finally {
+      setChangePasswordLoading(false);
+    }
+  };
+
+  const closeChangePasswordModal = () => {
+    setShowChangePassword(false);
+    setChangePasswordStep("request");
+    setChangePasswordCode("");
+    setNewPassword("");
+    setRetypePassword("");
+    setChangePasswordError("");
   };
 
   if (loading) {
@@ -374,6 +439,30 @@ function MyAccountPage() {
 
           {activeTab === "settings" && (
             <div className="space-y-6">
+              <div className="bg-white border border-[#e2e8f0] rounded-2xl shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-[#e2e8f0] bg-[#fafbfc]">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#2e6b4e]/10 text-[#2e6b4e] shrink-0">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-[#0f172b]">Change Password</h3>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <p className="text-sm text-[#64748b] mb-4">
+                    We&apos;ll send a verification code to your email. Enter the code and your new password to update it.
+                  </p>
+                  <button
+                    onClick={() => setShowChangePassword(true)}
+                    className="px-5 py-2.5 bg-[#2e6b4e] text-white rounded-xl font-medium hover:bg-[#255a43] transition-colors"
+                  >
+                    Change Password
+                  </button>
+                </div>
+              </div>
+
               <div className="bg-white border border-red-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-red-200 bg-red-50/50">
                   <div className="flex items-center gap-3">
@@ -478,6 +567,112 @@ function MyAccountPage() {
                     className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
                   >
                     {deleteAccountLoading ? "Deleting..." : "Delete Account"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showChangePassword && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-5">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-[#0f172b] mb-4">Change Password</h3>
+
+            {changePasswordStep === "request" && (
+              <div>
+                <p className="text-[#64748b] text-sm mb-6">
+                  We&apos;ll send a 6-digit verification code to your email. After you receive it, you&apos;ll enter the code and your new password.
+                </p>
+                {changePasswordError && (
+                  <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm mb-4">{changePasswordError}</div>
+                )}
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={closeChangePasswordModal}
+                    className="flex-1 px-4 py-2.5 bg-white border border-[#e2e8f0] text-[#314158] rounded-xl font-medium hover:bg-[#f8fafc] transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleChangePasswordRequest}
+                    disabled={changePasswordLoading}
+                    className="flex-1 px-4 py-2.5 bg-[#2e6b4e] text-white rounded-xl font-medium hover:bg-[#255a43] transition-colors disabled:opacity-50"
+                  >
+                    {changePasswordLoading ? "Sending..." : "Send verification code"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {changePasswordStep === "verify" && (
+              <form onSubmit={handleChangePasswordSubmit} className="space-y-4">
+                <p className="text-[#64748b] text-sm mb-2">
+                  Enter the code from your email and your new password.
+                </p>
+                {changePasswordError && (
+                  <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm">{changePasswordError}</div>
+                )}
+                <div>
+                  <label className="text-sm font-medium text-[#314158] mb-1 block">Verification code</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    value={changePasswordCode}
+                    onChange={(e) => {
+                      const digitsOnly = e.target.value.replace(/\D/g, "");
+                      if (digitsOnly.length <= 6) setChangePasswordCode(digitsOnly);
+                    }}
+                    maxLength={6}
+                    placeholder="000000"
+                    className="w-full h-12 px-4 rounded-xl border border-[#e2e8f0] text-center tracking-widest text-lg font-mono focus:outline-none focus:ring-2 focus:ring-[#2e6b4e] focus:border-transparent"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-[#314158] mb-1 block">New password</label>
+                  <input
+                    type="password"
+                    autoComplete="new-password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="At least 8 characters"
+                    minLength={8}
+                    className="w-full h-12 px-4 rounded-xl border border-[#e2e8f0] focus:outline-none focus:ring-2 focus:ring-[#2e6b4e] focus:border-transparent"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-[#314158] mb-1 block">Retype new password</label>
+                  <input
+                    type="password"
+                    autoComplete="new-password"
+                    value={retypePassword}
+                    onChange={(e) => setRetypePassword(e.target.value)}
+                    placeholder="Same as above"
+                    minLength={8}
+                    className="w-full h-12 px-4 rounded-xl border border-[#e2e8f0] focus:outline-none focus:ring-2 focus:ring-[#2e6b4e] focus:border-transparent"
+                    required
+                  />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={closeChangePasswordModal}
+                    className="flex-1 px-4 py-2.5 bg-white border border-[#e2e8f0] text-[#314158] rounded-xl font-medium hover:bg-[#f8fafc] transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={changePasswordLoading}
+                    className="flex-1 px-4 py-2.5 bg-[#2e6b4e] text-white rounded-xl font-medium hover:bg-[#255a43] transition-colors disabled:opacity-50"
+                  >
+                    {changePasswordLoading ? "Updating..." : "Update password"}
                   </button>
                 </div>
               </form>

@@ -30,8 +30,6 @@ function Footer() {
           <div>
             <h3 className="font-semibold text-white mb-4 text-sm uppercase tracking-wide">Account</h3>
             <ul className="space-y-3 text-sm text-[#94a3b8]">
-              <li><Link to="/login" className="hover:text-white transition-colors">Sign in</Link></li>
-              <li><Link to="/register" className="hover:text-white transition-colors">Sign up</Link></li>
               <li><Link to="/my-account" className="hover:text-white transition-colors">My account</Link></li>
               <li><Link to="/favorites" className="hover:text-white transition-colors">Favorites</Link></li>
             </ul>
@@ -40,8 +38,6 @@ function Footer() {
             <h3 className="font-semibold text-white mb-4 text-sm uppercase tracking-wide">Company</h3>
             <ul className="space-y-3 text-sm text-[#94a3b8]">
               <li><Link to="/about" className="hover:text-white transition-colors">About Us</Link></li>
-              <li><Link to="#" className="hover:text-white transition-colors">Terms of Service</Link></li>
-              <li><Link to="#" className="hover:text-white transition-colors">Privacy Policy</Link></li>
             </ul>
           </div>
         </div>
